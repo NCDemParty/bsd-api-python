@@ -146,6 +146,15 @@ class BsdApi:
 
         url_secure = self._generateRequest('/cons/get_bulk_constituent_data', {})
         return self._makePOSTRequest(url_secure, query)
+    
+    def cons_uploadBulkConstituentData(self, file, has_header='0'):
+        upload = open(file, 'r').read()
+        rower = upload.split("\n")
+        fields = rower[0]
+        upload = upload.replace(fields,'')
+        query = {'column_map': str(fields), 'has_header':has_header}
+        url_secure = self._generateRequest('/cons/upload_bulk_constituent_data', query)
+        return self._makePOSTRequest(url_secure, upload)
 
     def cons_setConstituentData(self, xml_data):
         url_secure = self._generateRequest('/cons/set_constituent_data')
