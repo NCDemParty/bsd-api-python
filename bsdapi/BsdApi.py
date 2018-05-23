@@ -19,6 +19,8 @@ from bsdapi.RequestGenerator import RequestGenerator
 from bsdapi.Styler import Factory as StylerFactory
 from bsdapi.ApiResult import FactoryFactory as ApiResultFactoryFactory
 from bsdapi.ApiResult import ApiResultPrettyPrintable
+import json
+import xmltodict
 
 import requests
 
@@ -111,7 +113,28 @@ class BsdApi:
 
         url_secure = self._generateRequest('/cons/get_constituents_by_ext_id', query)
         return self._makeGETRequest(url_secure)
+    
+    def cons_getMissingConstituents(self, ext_type, ext_ids, filter=None, bundles=None):
+        query = {'ext_type': ext_type, 'ext_ids': ','.join([str(elem) for elem in ext_ids])}
 
+        if filter:
+            query['filter'] =  str(Filters(filter))
+
+        if bundles:
+            query['bundles'] = str(Bundles(bundles))
+
+        url_secure = self._generateRequest('/cons/get_constituents_by_ext_id', query)
+        result_data = self._makeGETRequest(url_secure)
+        result_json = xmltodict.parse(result_data.body)
+        payload = json.loads(json.dumps(result_json['api']['cons']))
+        accepted_ids = []
+        for x in payload:
+            successful_id = int(str(x['ext_id']['@id']))
+            cons_id =  x['@id']
+            accepted_ids.append(successful_id)
+        missing_ids = list(set(ext_ids) - set(accepted_ids))
+        return missing_ids
+    
     def cons_getUpdatedConstituents(self, changed_since, filter=None, bundles=None):
         query = {'changed_since': str(changed_since)}
 
